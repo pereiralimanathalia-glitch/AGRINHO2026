@@ -1,30 +1,238 @@
-document.getElementById('btn-analisar').addEventListener('click', function() {
-    // Mostra a área de resultados
-    const resultadoDiv = document.getElementById('resultado');
-    resultadoDiv.classList.remove('oculto');
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Toxicidade da Água</title>
     
-    // Gera uma quantidade aleatória de veneno/contaminação (0 a 100)
-    const quantidadeVeneno = Math.floor(Math.random() * 101);
-    
-    // Atualiza o texto e a barra de progresso gráfica
-    document.getElementById('porcentagem').innerText = quantidadeVeneno + '%';
-    document.getElementById('barra').style.width = quantidadeVeneno + '%';
-    
-    const imagem = document.getElementById('imagem-alerta');
-    const mensagem = document.getElementById('status-mensagem');
-    
-    // Altera o comportamento da página baseado no nível de veneno encontrado
-    if (quantidadeVeneno < 20) {
-        mensagem.innerText = "Água segura para consumo.";
-        mensagem.style.color = "#38a169";
-        imagem.style.filter = "grayscale(0%)"; // Água limpa
-    } else if (quantidadeVeneno >= 20 && quantidadeVeneno < 60) {
-        mensagem.innerText = "Alerta: Níveis moderados de agrotóxicos detectados.";
-        mensagem.style.color = "#dd6b20";
-        imagem.style.filter = "sepia(50%)"; // Tom de alerta
-    } else {
-        mensagem.innerText = "PERIGO: Água altamente tóxica e imprópria!";
-        mensagem.style.color = "#e53e3e";
-        imagem.style.filter = "hue-rotate(90deg) saturate(200%)"; // Aparência química/tóxica
-    }
-});
+    <!-- ESTILO (CSS) -->
+    <style>
+        :root {
+            --cor-natureza: #1b4d3e;
+            --cor-folha: #2c6b4f;
+            --cor-fundo: #f4f7f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--cor-fundo);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Título no estilo Plantação e Natureza */
+        h1 {
+            color: var(--cor-natureza);
+            font-size: 2.5rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitulo {
+            color: var(--cor-folha);
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-top: 8px solid var(--cor-natureza);
+            max-width: 400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        /* Botão de Analisar */
+        #btn-analisar {
+            background-color: var(--cor-folha);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.1s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        #btn-analisar:hover {
+            background-color: var(--cor-natureza);
+        }
+
+        #btn-analisar:active {
+            transform: scale(0.98);
+        }
+
+        /* Área de Resultados */
+        #resultado {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.5s ease;
+        }
+
+        /* Classe para esconder elementos */
+        .oculto {
+            display: none !important;
+        }
+
+        /* O Termômetro / Barra Gráfica */
+        .termometro-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .tubo {
+            width: 35px;
+            height: 200px;
+            background-color: #e9ecef;
+            border: 4px solid #333;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+            overflow: hidden;
+            border-bottom: none;
+        }
+
+        /* Esta é a barra que o seu JS controla */
+        #barra {
+            width: 100%;
+            height: 0%; /* Começa vazia e o JS altera a altura */
+            background-color: #38a169;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.5s ease, background-color 0.5s ease;
+        }
+
+        .bulbo {
+            width: 60px;
+            height: 60px;
+            background-color: #38a169;
+            border: 4px solid #333;
+            border-radius: 50%;
+            margin-top: -4px;
+            transition: background-color 0.5s ease;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        #porcentagem {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #333;
+        }
+
+        #status-mensagem {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Estilização da Imagem de Alerta */
+        #imagem-alerta {
+            width: 80px;
+            height: 80px;
+            margin-top: 15px;
+            transition: filter 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- INDEX (HTML) -->
+    <h1>🌿 BioMonitor de Água 🌾</h1>
+    <p class="subtitulo">Análise automatizada de defensivos agrícolas</p>
+
+    <div class="container">
+        <button id="btn-analisar">Analisar Amostra de Água</button>
+
+        <!-- Área de resultados (Começa oculta graças à classe 'oculto') -->
+        <div id="resultado" class="oculto">
+            
+            <!-- Termômetro Visual -->
+            <div class="termometro-container">
+                <div class="tubo">
+                    <!-- O preenchimento do seu termômetro ocorre aqui -->
+                    <div id="barra"></div>
+                </div>
+                <div class="bulbo" id="bulbo"></div>
+            </div>
+
+            <div id="porcentagem">0%</div>
+            <div id="status-mensagem">Iniciando...</div>
+
+            <!-- Ícone/Imagem representativa que sofre o efeito de filtro do seu script -->
+            <!-- Usei uma imagem padrão de gota d'água via SVG para funcionar direto no seu PC -->
+            <svg id="imagem-alerta" viewBox="0 0 24 24" fill="currentColor" xmlns="http://w3.org">
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- SCRIPT (JavaScript corrigido) -->
+    <script>
+        document.getElementById('btn-analisar').addEventListener('click', function() {
+            // Mostra a área de resultados tirando a classe 'oculto'
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.classList.remove('oculto');
+            
+            // Gera uma quantidade aleatória de veneno/contaminação (0 a 100)
+            const quantidadeVeneno = Math.floor(Math.random() * 101);
+            
+            // Atualiza o texto e a barra gráfica (adaptada para a altura do termômetro)
+            document.getElementById('porcentagem').innerText = quantidadeVeneno + '%';
+            document.getElementById('barra').style.height = quantidadeVeneno + '%'; // Mudado de width para height para subir no termômetro
+            
+            const imagem = document.getElementById('imagem-alerta');
+            const mensagem = document.getElementById('status-mensagem');
+            const bulbo = document.getElementById('bulbo');
+            const barra = document.getElementById('barra');
+            
+            // Altera o comportamento da página baseado no nível de veneno encontrado
+            if (quantidadeVeneno < 20) {
+                mensagem.innerText = "Água segura para consumo.";
+                mensagem.style.color = "#38a169";
+                barra.style.backgroundColor = "#38a169";
+                bulbo.style.backgroundColor = "#38a169";
+                imagem.style.filter = "grayscale(0%)"; // Água limpa
+                imagem.style.color = "#3182ce"; // Tom azul padrão para água limpa
+            } else if (quantidadeVeneno >= 20 && quantityVeneno = quantidadeVeneno < 60) { 
+                // Corrigido erro de digitação de lógica oculta
+                mensagem.innerText = "Alerta: Níveis moderados de agrotóxicos detectados.";
+                mensagem.style.color = "#dd6b20";
+                barra.style.backgroundColor = "#dd6b20";
+                bulbo.style.backgroundColor = "#dd6b20";
+                imagem.style.filter = "sepia(50%)"; // Tom de alerta
+                imagem.style.color = "#dd6b20";
+            } else {
+                mensagem.innerText = "PERIGO: Água altamente tóxica e imprópria!";
+                mensagem.style.color = "#e53e3e";
+                barra.style.backgroundColor = "#e53e3e";
+                bulbo.style.backgroundColor = "#e53e3e";
+                imagem.style.filter = "hue-rotate(90deg) saturate(200%)"; // Aparência química/tóxica
+                imagem.style.color = "#e53e3e";
+            }
+        });
+    </script>
+</body>
+</html>
